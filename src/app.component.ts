@@ -141,6 +141,7 @@ export class AppComponent {
   
   isSidebarCollapsed = signal(false);
   
+  // Use a signal for user to ensure reactivity
   user = this.supabase.currentUser;
   
   // Computed menu items based on role
@@ -150,14 +151,16 @@ export class AppComponent {
       { label: 'Tableau de bord', icon: 'dashboard', route: '/dashboard' },
     ];
     
-    if (!role) return [];
+    // If role is not yet loaded, return empty or base
+    if (!role) return base;
 
     if (role === 'ADMIN') {
       return [
         ...base,
         { label: 'Validation', icon: 'verified', route: '/validation' },
-        { label: 'Paiements', icon: 'payments', route: '/payments' },
+        { label: 'Finance', icon: 'payments', route: '/payments' },
         { label: 'Rapports', icon: 'description', route: '/reports' },
+        { label: 'Missions', icon: 'business_center', route: '/missions' },
         { label: 'Utilisateurs', icon: 'group', route: '/users' },
         { label: 'Paramètres', icon: 'settings', route: '/settings' }
       ];
