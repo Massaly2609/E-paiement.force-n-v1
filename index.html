@@ -1,13 +1,16 @@
 
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <title>FORCE-N Platform</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
+  <head>
+    <meta charset="utf-8" />
+    <title>FORCE-N Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+   <style>
     body { font-family: 'Manrope', sans-serif; background-color: #F8FAFC; }
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -28,21 +31,10 @@
       to { opacity: 1; }
     }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
-    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?deps=react@18.2.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?deps=react@18.2.0,react-dom@18.2.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7",
-    "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0"
-  }
-}
-</script>
-</head>
-<body>
-  <div id="root"></div>
-</body>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- ✅ Vite entry point -->
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
 </html>
