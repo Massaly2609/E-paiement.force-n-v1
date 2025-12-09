@@ -68,10 +68,18 @@ export default function UsersPage() {
 
     } catch (err: any) {
       console.error(err);
-      // Traduction amicale des erreurs courantes
-      let msg = err.message;
-      if (msg.includes("Database error")) msg = "Erreur technique lors de l'enregistrement du profil. Vérifiez les données.";
-      if (msg.includes("already registered")) msg = "Cette adresse email est déjà utilisée.";
+      let msg = err.message || '';
+      
+      // Gestion spécifique des erreurs Supabase
+      if (msg.includes("Database error") || msg.includes("internal server error")) {
+        msg = "Erreur Base de Données (Trigger). IMPORTANT : Veuillez exécuter le script 'src/supabase_fix.sql' dans votre interface Supabase pour réparer ce problème.";
+      } else if (msg.includes("already registered")) {
+        msg = "Cette adresse email est déjà associée à un compte.";
+      } else if (msg.includes("weak_password")) {
+        msg = "Le mot de passe est trop faible. Il doit faire 6 caractères minimum.";
+      } else {
+        msg = "Erreur lors de la création : " + msg;
+      }
       
       setCreateError(msg);
     } finally {
@@ -201,10 +209,9 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* PROFESSIONAL MODAL - No Blur, Clean & Solid */}
+      {/* PROFESSIONAL MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Solid Dark Overlay (Standard Industry Practice) */}
           <div 
             className="absolute inset-0 bg-black/60 transition-opacity" 
             onClick={() => !creating && setIsModalOpen(false)}
@@ -229,9 +236,9 @@ export default function UsersPage() {
 
             {/* Error Message Area */}
             {createError && (
-              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md flex items-start gap-3 text-sm">
+              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md flex items-start gap-3 text-sm animate-[fadeIn_0.3s]">
                 <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
-                <span>{createError}</span>
+                <span className="leading-snug">{createError}</span>
               </div>
             )}
 
