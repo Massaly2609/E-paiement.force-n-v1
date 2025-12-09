@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,12 +7,14 @@ import {
   Settings, LogOut, Menu, Bell, ChevronLeft, ChevronRight,
   Briefcase, Users
 } from 'lucide-react';
+import ProfileModal from './ProfileModal';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [isProfileModalOpen, setProfileModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -125,7 +128,7 @@ export default function Layout() {
                <Bell size={20} />
                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 border border-white rounded-full"></span>
              </button>
-             <button className="p-2 text-slate-400 hover:bg-slate-50 hover:text-blue-600 rounded-full transition-colors">
+             <button onClick={() => setProfileModalOpen(true)} className="p-2 text-slate-400 hover:bg-slate-50 hover:text-blue-600 rounded-full transition-colors">
                <Settings size={20} />
              </button>
           </div>
@@ -136,6 +139,7 @@ export default function Layout() {
              <Outlet />
            </div>
         </div>
+        <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />
       </main>
     </div>
   );

@@ -271,17 +271,56 @@ export default function UsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-[fadeIn_0.2s]" onClick={closeModal}>
           <div className="w-full" onClick={e => e.stopPropagation()}>
           {modal === 'CREATE' && (
-            <div className="relative bg-white rounded-xl shadow-2xl max-w-lg mx-auto animate-[fadeInUp_0.2s] max-h-[95vh] flex flex-col">
-              <div className="px-6 py-4 border-b"><h3 className="text-lg font-bold">Nouveau compte utilisateur</h3></div>
-              <form onSubmit={handleCreateUser} className="p-8 space-y-6 overflow-y-auto">
-                <div className="space-y-1.5"><label className="text-sm font-bold text-slate-700">Nom Complet</label><div className="relative"><User className="absolute left-3 top-2.5 text-slate-400" size={18} /><input type="text" required value={formUser.fullName} onChange={e => setFormUser({...formUser, fullName: e.target.value})} className="w-full pl-10 pr-3 py-2 bg-slate-50 border rounded-md" /></div></div>
-                <div className="space-y-1.5"><label className="text-sm font-bold text-slate-700">Email</label><div className="relative"><Mail className="absolute left-3 top-2.5 text-slate-400" size={18} /><input type="email" required value={formUser.email} onChange={e => setFormUser({...formUser, email: e.target.value})} className="w-full pl-10 pr-3 py-2 bg-slate-50 border rounded-md" /></div></div>
-                <div className="space-y-1.5"><label className="text-sm font-bold text-slate-700">Rôle</label><div className="relative"><Briefcase className="absolute left-3 top-2.5 text-slate-400" size={18} /><select value={formUser.role} onChange={e => setFormUser({...formUser, role: e.target.value as any})} className="w-full pl-10 appearance-none py-2 bg-slate-50 border rounded-md">{Object.keys(roleConfig).map(role => (<option key={role} value={role}>{role}</option>))}</select></div><p className="text-xs text-slate-500 mt-2 px-1">{roleConfig[formUser.role].description}</p></div>
-                <div className="space-y-1.5"><div className="flex justify-between items-center"><label className="text-sm font-bold text-slate-700">Mot de passe</label><button type="button" onClick={() => { setFormUser({...formUser, password: generatePassword()}); setShowPassword(true); }} className="text-xs font-bold text-blue-600 flex items-center gap-1"><Wand2 size={12}/>Générer</button></div><div className="relative"><Lock className="absolute left-3 top-2.5 text-slate-400" size={18} /><input type={showPassword ? "text" : "password"} required minLength={8} value={formUser.password} onChange={e => setFormUser({...formUser, password: e.target.value})} className="w-full pl-10 pr-10 py-2 bg-slate-50 border rounded-md" /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1.5 p-1 text-slate-400">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
-              </form>
-              <div className="px-8 py-5 bg-slate-50 border-t flex justify-end gap-3">
-                <button onClick={closeModal} className="px-4 py-2 bg-white border rounded-lg font-semibold text-sm">Annuler</button>
-                <button onClick={handleCreateUser} disabled={processing} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-semibold text-sm w-40 flex justify-center">{processing ? <Loader2 className="animate-spin" size={18} /> : 'Créer le compte'}</button>
+            <div className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-auto animate-[fadeInUp_0.2s] max-h-[95vh] flex overflow-hidden">
+              {/* Left Panel - Illustration */}
+              <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-slate-100 p-12 text-center border-r border-slate-200">
+                <svg className="w-48 h-48 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 13.62C16 15.15 14.71 16.14 13.26 16.14H10.74C9.29 16.14 8 15.15 8 13.62V11.53C8 9.99 9.29 9 10.74 9H13.26C14.71 9 16 9.99 16 11.53V13.62Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 9V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 17.5V16.14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17.5 12H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8 12H6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14.5 22V20.59C14.5 19.03 13.24 17.75 11.7 17.75H10.15C8.61 17.75 7.35 19.03 7.35 20.59V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M19.5 17.5V16.09C19.5 14.53 18.24 13.25 16.7 13.25H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4.5 17.5V16.09C4.5 14.53 5.76 13.25 7.3 13.25H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9.5 2V3.41C9.5 4.97 8.24 6.25 6.7 6.25H5.15C3.61 6.25 2.35 4.97 2.35 3.41V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21.65 3.41V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21.65 3.41C21.65 4.97 20.39 6.25 18.85 6.25H17.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <h2 className="text-2xl font-bold text-slate-800 mt-6">Agrandir votre équipe</h2>
+                <p className="text-slate-500 mt-2 text-sm max-w-xs">Créez un nouvel accès pour un collaborateur en définissant son rôle et ses informations en quelques clics.</p>
+              </div>
+              
+              {/* Right Panel - Form */}
+              <div className="w-full md:w-1/2 flex flex-col bg-white">
+                <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-slate-800">Nouveau collaborateur</h3>
+                  <button onClick={closeModal} className="p-1 text-slate-400 hover:bg-slate-100 rounded-full"><X size={20}/></button>
+                </div>
+                <form onSubmit={handleCreateUser} className="p-8 space-y-6 overflow-y-auto flex-1">
+                  <div className="space-y-1.5"><label className="text-sm font-bold text-slate-700">Nom Complet</label><div className="relative"><User className="absolute left-3 top-3 text-slate-400" size={16} /><input type="text" placeholder="Ex: Awa Diop" required value={formUser.fullName} onChange={e => setFormUser({...formUser, fullName: e.target.value})} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" /></div></div>
+                  <div className="space-y-1.5"><label className="text-sm font-bold text-slate-700">Email</label><div className="relative"><Mail className="absolute left-3 top-3 text-slate-400" size={16} /><input type="email" placeholder="Ex: a.diop@force-n.sn" required value={formUser.email} onChange={e => setFormUser({...formUser, email: e.target.value})} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" /></div></div>
+                  
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 mb-2 block">Rôle</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(roleConfig).map(([role, config]) => (
+                        <button type="button" key={role} onClick={() => setFormUser({...formUser, role: role as UserRole})} className={`p-4 rounded-lg border-2 text-left transition-all ${formUser.role === role ? 'bg-blue-50 border-blue-500 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                          <div className={`flex items-center gap-2 font-bold ${config.color}`}><config.icon size={16}/> {role}</div>
+                          <p className="text-xs text-slate-500 mt-1">{config.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5"><div className="flex justify-between items-center"><label className="text-sm font-bold text-slate-700">Mot de passe</label><button type="button" onClick={() => { setFormUser({...formUser, password: generatePassword()}); setShowPassword(true); }} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline"><Wand2 size={12}/>Générer</button></div><div className="relative"><Lock className="absolute left-3 top-3 text-slate-400" size={16} /><input type={showPassword ? "text" : "password"} required minLength={8} value={formUser.password} onChange={e => setFormUser({...formUser, password: e.target.value})} className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1.5 p-1 text-slate-400 hover:text-slate-700">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
+                </form>
+                <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                  <button onClick={closeModal} className="px-5 py-2.5 bg-white border border-slate-300 rounded-lg font-semibold text-sm text-slate-700 hover:bg-slate-100 transition-colors">Annuler</button>
+                  <button onClick={handleCreateUser} disabled={processing} className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-semibold text-sm w-48 flex justify-center items-center gap-2 hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20">
+                    {processing ? <Loader2 className="animate-spin" size={18} /> : 'Créer le compte'}
+                  </button>
+                </div>
               </div>
             </div>
           )}

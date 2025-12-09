@@ -10,9 +10,10 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ session: null, user: null, loading: true, isAdmin: false, signOut: async () => {} });
+const AuthContext = createContext<AuthContextType>({ session: null, user: null, loading: true, isAdmin: false, signOut: async () => {}, refreshUser: async () => {} });
 
 export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -22,32 +23,42 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+  
+  const fetchUserProfile = async (session: Session) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    if (error || !data) {
+      const errorMessage = error ? JSON.stringify(error, null, 2) : 'Aucun profil correspondant trouvé dans la base de données.';
+      console.error('Erreur de configuration : profil introuvable pour l\'utilisateur authentifié.', error);
+      alert(`Votre session est invalide car votre profil est introuvable. Vous allez être déconnecté.\n\nDétails techniques: ${errorMessage}\n\nVeuillez vérifier que les permissions (RLS) sont correctes et que le profil existe.`);
+      
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } else {
+      setUser(data);
+      setSession(session);
+    }
+  }
 
   const handleAuthChange = async (session: Session | null) => {
       if (session?.user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error || !data) {
-          const errorMessage = error ? JSON.stringify(error, null, 2) : 'Aucun profil correspondant trouvé dans la base de données.';
-          console.error('Erreur de configuration : profil introuvable pour l\'utilisateur authentifié.', error);
-          alert(`Votre session est invalide car votre profil est introuvable. Vous allez être déconnecté.\n\nDétails techniques: ${errorMessage}\n\nVeuillez vérifier que les permissions (RLS) sont correctes et que le profil existe.`);
-          
-          await supabase.auth.signOut();
-          setUser(null);
-          setSession(null);
-        } else {
-          setUser(data);
-          setSession(session);
-        }
+        await fetchUserProfile(session);
       } else {
         setUser(null);
         setSession(null);
       }
       setLoading(false);
+  };
+  
+  const refreshUser = async () => {
+    if (session?.user) {
+      await fetchUserProfile(session);
+    }
   };
 
   useEffect(() => {
@@ -63,7 +74,7 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, isAdmin: user?.role === 'ADMIN', signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, isAdmin: user?.role === 'ADMIN', signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
