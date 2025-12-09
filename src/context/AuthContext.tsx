@@ -1,5 +1,7 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, Profile } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+import { Profile } from '../types';
 import { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -17,40 +19,48 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleAuthChange = async (session: Session | null) => {
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error || !data) {
+          const errorMessage = error ? JSON.stringify(error, null, 2) : 'Aucun profil correspondant trouvé dans la base de données.';
+          console.error('Erreur de configuration : profil introuvable pour l\'utilisateur authentifié.', error);
+          alert(`Votre session est invalide car votre profil est introuvable. Vous allez être déconnecté.\n\nDétails techniques: ${errorMessage}\n\nVeuillez vérifier que les permissions (RLS) sont correctes et que le profil existe.`);
+          
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+        } else {
+          setUser(data);
+          setSession(session);
+        }
+      } else {
+        setUser(null);
+        setSession(null);
+      }
+      setLoading(false);
+  };
+
   useEffect(() => {
-    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) fetchProfile(session.user.id);
-      else setLoading(false);
+        handleAuthChange(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) fetchProfile(session.user.id);
-      else {
-        setUser(null);
-        setLoading(false);
-      }
+        handleAuthChange(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      setUser(data);
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
 
   return (
     <AuthContext.Provider value={{ session, user, loading, isAdmin: user?.role === 'ADMIN', signOut }}>
