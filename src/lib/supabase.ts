@@ -29,7 +29,7 @@ const memoryStorage = {
 };
 
 // 2. Client SECONDAIRE (Singleton)
-// Dédié uniquement à la création de comptes.
+// Dédié uniquement à la création de comptes sans perturber la session admin.
 const adminCreatorClient = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false, 
@@ -46,18 +46,18 @@ export const adminCreateUser = async (email: string, password: string, fullName:
   // On s'assure que le client secondaire est propre
   await adminCreatorClient.auth.signOut();
 
-  // On crée le compte avec les métadonnées pour le Trigger SQL.
-  // IMPORTANT: On ajoute 'balance: 0' et 'avatar_url' car le trigger de la base de données 
-  // échoue souvent si ces champs sont manquants (contrainte NOT NULL ou logique interne).
+  // On crée le compte avec un maximum de métadonnées pour satisfaire les triggers DB stricts.
   const { data, error } = await adminCreatorClient.auth.signUp({
     email,
     password,
     options: {
       data: { 
         full_name: fullName,
+        name: fullName, // Doublon de sécurité pour les triggers qui cherchent "name"
         role: role,
         balance: 0,
-        avatar_url: ''
+        avatar_url: '',
+        phone: '' // Champ vide pour éviter les erreurs si la DB l'attend
       }
     }
   });
