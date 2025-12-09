@@ -67,18 +67,18 @@ export default function UsersPage() {
       }, 500);
 
     } catch (err: any) {
-      console.error(err);
-      let msg = err.message || '';
+      console.error("Erreur complète:", err);
+      let msg = err.message || JSON.stringify(err);
       
-      // Gestion spécifique des erreurs Supabase
-      if (msg.includes("Database error") || msg.includes("internal server error")) {
-        msg = "Erreur Base de Données (Trigger). IMPORTANT : Veuillez exécuter le script 'src/supabase_fix.sql' dans votre interface Supabase pour réparer ce problème.";
+      // Traduction des erreurs courantes
+      if (msg.includes("Database error")) {
+        msg = "Erreur Base de Données : Le trigger SQL a échoué. Assurez-vous d'avoir exécuté le dernier script SQL fourni dans le chat.";
       } else if (msg.includes("already registered")) {
-        msg = "Cette adresse email est déjà associée à un compte.";
+        msg = "Cette adresse email est déjà utilisée.";
       } else if (msg.includes("weak_password")) {
-        msg = "Le mot de passe est trop faible. Il doit faire 6 caractères minimum.";
-      } else {
-        msg = "Erreur lors de la création : " + msg;
+        msg = "Le mot de passe est trop faible (6 caractères min).";
+      } else if (msg.includes("anonymous provider is disabled")) {
+        msg = "Erreur de configuration Supabase (Provider).";
       }
       
       setCreateError(msg);
@@ -236,7 +236,7 @@ export default function UsersPage() {
 
             {/* Error Message Area */}
             {createError && (
-              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md flex items-start gap-3 text-sm animate-[fadeIn_0.3s]">
+              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md flex items-start gap-3 text-sm animate-[fadeIn_0.3s] break-words">
                 <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
                 <span className="leading-snug">{createError}</span>
               </div>
