@@ -36,21 +36,21 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative bg-slate-900 overflow-hidden">
       {/* Background Image - Plus visible (opacité augmentée, overlay réduit) */}
-      <div 
+      <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('https://raagnale.force-n.sn/resources/13esy/login/keycloak/img/keycloak-bg.png')" }}
       />
-      
+
       {/* Overlay très léger pour garder la lisibilité sans cacher l'image */}
       <div className="absolute inset-0 z-0 bg-black/30"></div>
 
       {/* Login Card Compacte */}
       <div className="relative z-10 w-full max-w-[360px] bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden animate-[fadeInUp_0.5s_ease-out] border-t-4 border-blue-700 mx-4">
-        
+
         <div className="pt-8 pb-4 text-center px-6">
-          <img 
-            src="https://raagnale.force-n.sn/resources/13esy/login/keycloak/img/keycloak-logo-text.png" 
-            alt="FORCE-N" 
+          <img
+            src="https://raagnale.force-n.sn/resources/13esy/login/keycloak/img/keycloak-logo-text.png"
+            alt="FORCE-N"
             className="h-8 mx-auto mb-4 object-contain"
           />
           <h1 className="text-lg font-bold text-slate-800 tracking-tight">Connexion</h1>
@@ -117,7 +117,7 @@ export default function Login() {
             <a href="#" className="hover:text-blue-600 transition-colors">Contact</a>
         </div>
       </div>
-      
+
       {/* Footer Branding Discret */}
       <div className="absolute bottom-4 text-white/50 text-[10px] font-medium tracking-widest uppercase">
         Plateforme Force-N &copy; 2024
