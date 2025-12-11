@@ -89,7 +89,7 @@ const ProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     }
   }
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
+ const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     clearMessages();
@@ -98,7 +98,15 @@ const ProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     try {
       // 1. Handle avatar upload if a new file is selected
       if (avatarFile) {
-        const filePath = `${user!.id}/${Date.now()}_${avatarFile.name}`;
+        // --- NETTOYAGE DU NOM DE FICHIER (CRITIQUE) ---
+        const cleanName = avatarFile.name
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Enlève les accents
+          .replace(/\s+/g, '_') // Remplace les espaces par _
+          .replace(/[^a-zA-Z0-9_.-]/g, ''); // Enlève les caractères spéciaux
+
+        const filePath = `${user!.id}/${Date.now()}_${cleanName}`;
+        // ---------------------------------------------
+
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(filePath, avatarFile);
@@ -109,7 +117,7 @@ const ProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         newAvatarUrl = urlData.publicUrl;
       }
 
-      // 2. Prepare profile data for update
+      // ... (le reste de la fonction reste identique : update profile, success message, etc.)
       const updates: { full_name: string; phone: string; avatar_url?: string } = {
         full_name: fullName,
         phone: phone,
@@ -118,7 +126,6 @@ const ProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         updates.avatar_url = newAvatarUrl;
       }
 
-      // 3. Update profile in database
       const { error: profileError } = await supabase
         .from('profiles')
         .update(updates)
@@ -141,7 +148,6 @@ const ProfileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
        setLoading(false);
     }
   };
-
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();

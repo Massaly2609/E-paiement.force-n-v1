@@ -1,114 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Mission } from '../types';
-import ReportModal from '../components/ReportModal';
-import { Briefcase, Calendar, Clock, AlertCircle, Loader2, ChevronRight, CheckCircle } from 'lucide-react';
+import { X, FileText, UploadCloud, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 
-export default function Missions() {
+interface ReportModalProps {
+  mission: Mission;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export default function ReportModal({ mission, onClose, onSuccess }: ReportModalProps) {
   const { user } = useAuth();
-  const [missions, setMissions] = useState<Mission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [period, setPeriod] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    async function fetchMissions() {
-      try {
-        if (!user) return;
-        const { data, error } = await supabase
-          .from('missions')
-          .select('*')
-          .eq('consultant_id', user.id)
-          .order('created_at', { ascending: false });
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !period) return setError("Veuillez remplir tous les champs.");
+    setLoading(true);
+    try {
 
-        if (error) throw error;
-        setMissions(data || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      const cleanName = file.name
+        .normalize("NFD") // Décompose les accents (é devient e + ')
+        .replace(/[\u0300-\u036f]/g, "") // Supprime les marques d'accents
+        .replace(/\s+/g, '_') // Remplace les espaces par des _
+        .replace(/[^a-zA-Z0-9_.-]/g, ''); // Supprime tout caractère spécial restant
+      // 2. On crée le chemin final
+      const fileName = `${user?.id}/${Date.now()}_${cleanName}`;
+      // 3. Upload vers Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('reports')
+        .upload(fileName, file);
+      if (uploadError) throw new Error("Erreur upload : " + uploadError.message);
+      const { data: urlData } = supabase.storage.from('reports').getPublicUrl(fileName);
+
+      const { error: dbError } = await supabase.from('reports').insert({
+        mission_id: mission.id,
+        consultant_id: user?.id,
+        period: period,
+        file_url: urlData.publicUrl,
+        status: 'SUBMITTED'
+      });
+      if (dbError) throw dbError;
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    fetchMissions();
-  }, [user]);
-
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center h-64 text-blue-600 gap-4">
-      <Loader2 className="animate-spin" size={32} />
-      <p className="text-sm font-bold uppercase tracking-widest">Chargement des missions...</p>
-    </div>
-  );
+  };
 
   return (
-    <> {/* Début du fragment obligatoire */}
-      <div className="space-y-6 animate-[fadeIn_0.4s]">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Mes Missions</h1>
-            <p className="text-slate-500 font-medium">Consultez vos contrats actifs et envoyez vos rapports.</p>
-          </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-[slideUp_0.3s_ease-out]">
+        <div className="px-6 py-4 border-b bg-slate-50 flex justify-between items-center">
+          <h3 className="font-bold text-slate-800">Soumettre un rapport</h3>
+          <button onClick={onClose}><X size={20} className="text-slate-400"/></button>
         </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-center gap-3">
-            <AlertCircle size={20} />
-            <p className="text-sm font-bold">{error}</p>
+        <form onSubmit={handleUpload} className="p-6 space-y-4">
+          {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
+          <div className="space-y-1"><label className="text-xs font-bold uppercase text-slate-500">Période</label><input type="text" placeholder="Ex: Octobre 2024" className="w-full px-4 py-3 bg-slate-50 border rounded-xl" value={period} onChange={e => setPeriod(e.target.value)} /></div>
+          <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:bg-slate-50 border-slate-300">
+            {file ? <div className="text-green-600 font-bold flex flex-col items-center"><FileText size={24}/>{file.name}</div> : <div className="text-slate-400 flex flex-col items-center"><UploadCloud size={24}/><span className="text-xs mt-2">Cliquez pour PDF</span></div>}
+            <input type="file" ref={fileInputRef} accept="application/pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
           </div>
-        )}
-
-        {missions.length === 0 ? (
-          <div className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center">
-            <Briefcase className="mx-auto text-slate-300 mb-4" size={48} />
-            <h3 className="text-lg font-bold text-slate-800">Aucune mission assignée</h3>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {missions.map((mission) => (
-              <div key={mission.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                <div className="p-6">
-                  {/* ... Contenu de la carte identique ... */}
-                  <h3 className="font-bold text-slate-900 text-lg mb-2 truncate">{mission.title}</h3>
-                  <p className="text-slate-500 text-sm mb-6 line-clamp-2">{mission.description}</p>
-                </div>
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                  <button className="text-blue-600 text-xs font-bold hover:underline flex items-center gap-1">
-                    VOIR DÉTAILS <ChevronRight size={14} />
-                  </button>
-                  <button
-                    onClick={() => setSelectedMission(mission)}
-                    className="bg-slate-900 text-white px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-widest shadow-sm hover:bg-slate-800 transition"
-                  >
-                    Envoyer Rapport
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+          <button disabled={loading} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold flex justify-center">{loading ? <Loader2 className="animate-spin"/> : 'Envoyer'}</button>
+        </form>
       </div>
-
-      {/* MODAL : Rendue à l'intérieur du fragment */}
-      {selectedMission && (
-        <ReportModal
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onSuccess={() => {
-            setSelectedMission(null);
-            setShowSuccessToast(true);
-            setTimeout(() => setShowSuccessToast(false), 3000);
-          }}
-        />
-      )}
-
-      {/* TOAST : Rendu à l'intérieur du fragment */}
-      {showSuccessToast && (
-        <div className="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-[fadeInUp_0.3s] z-[70]">
-          <CheckCircle size={20} />
-          <span className="font-bold text-sm">Rapport soumis avec succès !</span>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

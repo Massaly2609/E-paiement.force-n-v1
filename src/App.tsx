@@ -6,9 +6,11 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Missions from './pages/Missions';
 import AdminMissions from './pages/AdminMissions';
+import AdminValidation from './pages/AdminValidation';
+import Reports from './pages/Reports';
+import Payments from './pages/Payments';
 import Layout from './components/Layout';
 import { Loader2 } from 'lucide-react';
-import AdminValidation from './pages/AdminValidation';
 
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -16,9 +18,9 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   return session ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// Sous-composant pour consommer useAuth correctement
 const AppRoutes = () => {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <Routes>
@@ -28,12 +30,19 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="users" element={<Users />} />
 
-        {/* Affichage conditionnel selon le rôle */}
-        <Route path="missions" element={user?.role === 'ADMIN' ? <AdminMissions /> : <Missions />} />
+        {/* Route dynamique Missions */}
+        <Route path="missions" element={isAdmin ? <AdminMissions /> : <Missions />} />
 
+        {/* Route Validation */}
         <Route path="validation" element={<AdminValidation />} />
-        <Route path="payments" element={<div className="p-10 text-center">Finance (À venir)</div>} />
-        <Route path="reports" element={<div className="p-10 text-center">Rapports (À venir)</div>} />
+
+        {/* Route Rapports ACTIVÉE */}
+        <Route path="reports" element={<Reports />} />
+
+        {/* Route Paiements */}
+        <Route path="payments" element={<Payments />} />
+
+        <Route path="payments" element={<div className="p-10 text-center text-slate-500">Finance (À venir)</div>} />
       </Route>
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
