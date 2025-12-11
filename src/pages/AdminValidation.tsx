@@ -95,6 +95,8 @@ export default function AdminValidation() {
     }
   };
 
+
+
   if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-blue-600" /></div>;
 
   return (
