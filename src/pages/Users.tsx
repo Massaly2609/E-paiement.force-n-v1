@@ -5,7 +5,8 @@ import {
   Users as UsersIcon, Search, Plus, MoreVertical, X, Loader2, Mail, Lock, User, AlertCircle,
   Briefcase, Wand2, Eye, EyeOff, Edit, Trash2, UserX, Eye as EyeIcon, UserCheck, ShieldCheck,
   ShieldOff, CheckCircle2, XCircle, CheckSquare, ChevronDown, Globe, Key, BadgeCheck,
-  Sparkles, TrendingUp, BarChart3, Target, Clock, Bell, Settings, Download, Upload
+  Sparkles, TrendingUp, BarChart3, Target, Clock, Bell, Settings, Download, Upload,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 
 // --- UTILITIES & CONFIG ---
@@ -148,6 +149,151 @@ const StatsCard = ({ icon: Icon, value, label, color, trend }: any) => (
   </div>
 );
 
+// --- PAGINATION COMPONENT ---
+const Pagination = ({
+  currentPage,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  className = ""
+}: {
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+}) => {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  if (totalPages <= 1) return null;
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(totalPages, start + maxVisible - 1);
+
+      if (end - start + 1 < maxVisible) {
+        start = Math.max(1, end - maxVisible + 1);
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <div className={`flex items-center justify-between ${className}`}>
+      <div className="flex items-center gap-2 text-sm text-slate-600">
+        <span className="font-medium">
+          Affichage de <span className="font-bold text-slate-900">
+            {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}-
+            {Math.min(currentPage * itemsPerPage, totalItems)}
+          </span> sur <span className="font-bold text-slate-900">{totalItems}</span> utilisateurs
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {/* First Page Button */}
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            currentPage === 1
+              ? 'text-slate-300 cursor-not-allowed'
+              : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+          }`}
+        >
+          <ChevronsLeft size={18} />
+        </button>
+
+        {/* Previous Page Button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            currentPage === 1
+              ? 'text-slate-300 cursor-not-allowed'
+              : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+          }`}
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        {/* Page Numbers */}
+        <div className="flex items-center gap-1">
+          {getPageNumbers().map((page) => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-all duration-200 ${
+                currentPage === page
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25'
+                  : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+
+        {/* Next Page Button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            currentPage === totalPages
+              ? 'text-slate-300 cursor-not-allowed'
+              : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+          }`}
+        >
+          <ChevronRight size={18} />
+        </button>
+
+        {/* Last Page Button */}
+        <button
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            currentPage === totalPages
+              ? 'text-slate-300 cursor-not-allowed'
+              : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+          }`}
+        >
+          <ChevronsRight size={18} />
+        </button>
+      </div>
+
+      {/* Items Per Page Selector */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-slate-600">Par page:</span>
+        <select
+          value={itemsPerPage}
+          onChange={(e) => {
+            onPageChange(1); // Reset to first page when changing items per page
+            // You might want to handle this differently depending on your state management
+          }}
+          className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
 // --- MAIN COMPONENT ---
 export default function UsersPage() {
   const [users, setUsers] = useState<Profile[]>([]);
@@ -170,6 +316,10 @@ export default function UsersPage() {
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const showToast = (message: string, type: 'success' | 'error') => setToast({ message, type });
 
@@ -276,12 +426,30 @@ export default function UsersPage() {
     );
   };
 
+  // Filter users based on search and filters
   const filteredUsers = users.filter(u =>
     (showHidden || !u.is_hidden) &&
     (roleFilter === 'ALL' || u.role === roleFilter) &&
     (u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
      u.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Paginate filtered users
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page
+  };
 
   const roleFilterButtons = ['ALL', ...Object.keys(roleConfig)] as const;
 
@@ -479,7 +647,7 @@ export default function UsersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => {
+                  currentUsers.map((user) => {
                     const RoleIcon = roleConfig[user.role].icon;
                     return (
                       <tr
@@ -585,24 +753,15 @@ export default function UsersPage() {
             </table>
           </div>
 
-          {/* Table Footer */}
+          {/* Table Footer with Pagination */}
           <div className="px-6 py-4 border-t border-slate-200/50 bg-gradient-to-r from-slate-50 to-slate-100/50">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600">
-                Affichage de <span className="font-semibold">{filteredUsers.length}</span> utilisateurs
-              </p>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                  Précédent
-                </button>
-                <button className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
-                  1
-                </button>
-                <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                  Suivant
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredUsers.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              className="w-full"
+            />
           </div>
         </div>
       </div>
